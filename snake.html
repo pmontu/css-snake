@@ -1,57 +1,144 @@
 <html>
-    <head>
-    <style>
+
+<head>
+  <style>
     .canvas{
-  border-style: solid;
-}
-    </style>
-    <script src="easeljs-0.8.2.combined.js"></script>
-    
-    </head>
-  <body onload="init();">
-  <canvas id="demoCanvas" width="800" height="600" class="canvas"></canvas>
-  <script>
-    var body_start = new createjs.Shape();
+      border: 7px gray solid;
+      background-color: #ffffff;
+      border-style: dotted
+    }
+    body {
+      background-color: #cccccc;
+      background-size: cover;
+    }
+    #workarea {
+      width: 812.8px;
+      margin-bottom: 10px;
+      display:block;
+      overflow:auto;
+    }
+    #workarea>input {
+      float:right;
+      width: 200px;
+    }
+    br {
+      clear:both;
+    }
+  </style>
+  <script src="easeljs-0.8.2.combined.js"></script>
+
+</head>
+
+<body onload="init();">
+
+<h1>Snake Wars</h1>
+
+<div id="workarea">
+  <input type="button" value="pause" id="pauseBtn" onclick="togglePause();"><br />
+  <input type="button" value="grow" onclick="grow();">
+</div>
+<canvas id="demoCanvas" width="800" height="600" class="canvas"></canvas>
+
+<script>
+var body  = Array();
 var stage = new createjs.Stage("demoCanvas");
 var KEYCODE_LEFT = "a", 
 		KEYCODE_RIGHT = "d",
 		KEYCODE_UP = "w", 
 		KEYCODE_DOWN = "s";
+		KEYCODE_SPACE = "c";
 var direction = KEYCODE_RIGHT;
 var snake_size = 25
+var add_size = false;
 
 function init() {
+
+  /* Snake Init */
+  var body_start = new createjs.Shape();
   body_start.graphics.beginFill("black").rr(0, 0, snake_size, snake_size, snake_size*0.2);
+  body.push(body_start);
   stage.addChild(body_start);
-  stage.update();
+
+  /* Timer */
   createjs.Ticker.on("tick", tick);
-  createjs.Ticker.setFPS(10);
-  this.document.onkeydown = keyPressed;	
+  createjs.Ticker.setFPS(1);
+
+  /* Keyboard Listner */
+  this.document.onkeydown = keyPressed;
 }
 
 function tick(event) {
-  if(direction==KEYCODE_LEFT){
-    body_start.x = body_start.x - snake_size;
-  } else if (direction==KEYCODE_RIGHT){
-    body_start.x = body_start.x + snake_size;
-  }  else if (direction==KEYCODE_UP){
-    body_start.y = body_start.y - snake_size;
-  }  else if (direction==KEYCODE_DOWN){
-    body_start.y = body_start.y + snake_size;
-  } 
-  if (body_start.x > stage.canvas.width) { body_start.x = 0; }
-  else if (body_start.x < 0) { body_start.x = stage.canvas.width; }
-  else if (body_start.y > stage.canvas.height) { body_start.y = 0; }
-  else if (body_start.y < 0) { body_start.y = stage.canvas.height; }
-  stage.update(event);
+
+  if (!createjs.Ticker.getPaused()) {
+
+    /* Creating Head */
+    var body_latest = body[body.length-1]
+    var body_new = new createjs.Shape();
+    var x = body_latest.x, y = body_latest.y;
+    body_new.graphics.beginFill("black").rr(0, 0, snake_size, snake_size, snake_size*0.2);
+    
+    /* Incrementing position */
+    if(direction==KEYCODE_LEFT){
+      body_new.x = x - snake_size;
+      body_new.y = y;
+    } else if (direction==KEYCODE_RIGHT){
+      body_new.x = x + snake_size;
+      body_new.y = y;
+    }  else if (direction==KEYCODE_UP){
+      body_new.x = x;
+      body_new.y = y - snake_size;
+    }  else if (direction==KEYCODE_DOWN){
+      body_new.x = x;
+      body_new.y = y + snake_size;
+    }
+
+    /* Adding Node */
+    stage.addChild(body_new);
+    body.push(body_new);
+
+    /* Debug */
+    //console.log([x, y, direction, body_new.x, body_new.y].join(", "))
+    //console.log(body.map(part => part.x.toString()+"-"+part.y.toString()).join(", "))
+
+    /* Remove Tail */
+    if(add_size){
+      add_size = false;
+    } else {
+      var body_remove = body.shift();
+      stage.removeChild(body_remove);
+    }
+
+    /* Continous Movement */
+    /*if (body_start.x > stage.canvas.width) { body_start.x = 0; }
+    else if (body_start.x < 0) { body_start.x = stage.canvas.width; }
+    else if (body_start.y > stage.canvas.height) { body_start.y = 0; }
+    else if (body_start.y < 0) { body_start.y = stage.canvas.height; }*/
+    stage.update(event);
+  }
 }
 
 function keyPressed(event) {
-    if(event.key==KEYCODE_LEFT || event.key==KEYCODE_RIGHT || event.key==KEYCODE_UP || event.key==KEYCODE_DOWN){
+  if((event.key==KEYCODE_LEFT && direction!=KEYCODE_RIGHT) || 
+  (event.key==KEYCODE_RIGHT && direction!=KEYCODE_LEFT) || 
+  (event.key==KEYCODE_UP && direction!=KEYCODE_DOWN) || 
+  (event.key==KEYCODE_DOWN && direction!=KEYCODE_UP)){
     direction = event.key
+  } else if (event.key==KEYCODE_SPACE) {
+    add_size = true;
   }
 		//stage.update();
-	}
-    </script>
+}
+
+function togglePause() {
+  var paused = !createjs.Ticker.getPaused();
+  createjs.Ticker.setPaused(paused);
+  document.getElementById("pauseBtn").value = paused ? "unpause" : "pause";
+}
+
+function grow(){
+  add_size = true;
+}
+</script>
+
 </body>
 </html>
